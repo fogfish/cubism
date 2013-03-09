@@ -962,9 +962,10 @@ cubism_contextPrototype.axis = function() {
       "tickFormat");
 };
 
-var cubism_axisFormatSeconds = d3.time.format("%I:%M:%S %p"),
-    cubism_axisFormatMinutes = d3.time.format("%I:%M %p"),
-    cubism_axisFormatDays = d3.time.format("%B %d");
+var cubism_axisFormatSeconds = d3.time.format("%Y-%m-%d"),
+    cubism_axisFormatMinutes = d3.time.format("%Y-%m-%d"),
+    cubism_axisFormatDays = d3.time.format("%Y-%m-%d");
+
 cubism_contextPrototype.rule = function() {
   var context = this,
       metric = cubism_identity;
