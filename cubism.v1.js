@@ -1,5 +1,5 @@
 (function(exports){
-var cubism = exports.cubism = {version: "1.2.0"};
+var cubism = exports.cubism = {version: "1.2.2"};
 var cubism_id = 0;
 function cubism_identity(d) { return d; }
 cubism.option = function(name, defaultValue) {
@@ -198,7 +198,7 @@ cubism_contextPrototype.graphite = function(host) {
 
       // Apply the summarize, if necessary.
       if (step !== 1e4) target = "summarize(" + target + ",'"
-          + (!(step % 36e5) ? step / 36e5 + "hour" : !(step % 6e4) ? step / 6e4 + "min" : step + "sec")
+          + (!(step % 36e5) ? step / 36e5 + "hour" : !(step % 6e4) ? step / 6e4 + "min" : step / 1e3 + "sec")
           + "','" + sum + "')";
 
       d3.text(host + "/render?format=raw"
@@ -470,7 +470,7 @@ cubism_contextPrototype.horizon = function() {
   function horizon(selection) {
 
     selection
-        .on("mousemove.horizon", function() { context.focus(d3.mouse(this)[0]); })
+        .on("mousemove.horizon", function() { context.focus(Math.round(d3.mouse(this)[0])); })
         .on("mouseout.horizon", function() { context.focus(null); });
 
     selection.append("canvas")
@@ -686,7 +686,7 @@ cubism_contextPrototype.comparison = function() {
   function comparison(selection) {
 
     selection
-        .on("mousemove.comparison", function() { context.focus(d3.mouse(this)[0]); })
+        .on("mousemove.comparison", function() { context.focus(Math.round(d3.mouse(this)[0])); })
         .on("mouseout.comparison", function() { context.focus(null); });
 
     selection.append("canvas")
@@ -904,9 +904,10 @@ cubism_contextPrototype.axis = function() {
       scale = context.scale,
       axis_ = d3.svg.axis().scale(scale);
 
-  var format = context.step() < 6e4 ? cubism_axisFormatSeconds
+  var formatDefault = context.step() < 6e4 ? cubism_axisFormatSeconds
       : context.step() < 864e5 ? cubism_axisFormatMinutes
       : cubism_axisFormatDays;
+  var format = formatDefault;
 
   function axis(selection) {
     var id = ++cubism_id,
@@ -953,6 +954,12 @@ cubism_contextPrototype.axis = function() {
     }
   };
 
+  axis.focusFormat = function(_) {
+    if (!arguments.length) return format == formatDefault ? null : _;
+    format = _ == null ? formatDefault : _;
+    return axis;
+  };
+
   return d3.rebind(axis, axis_,
       "orient",
       "ticks",
@@ -962,10 +969,9 @@ cubism_contextPrototype.axis = function() {
       "tickFormat");
 };
 
-var cubism_axisFormatSeconds = d3.time.format("%Y-%m-%d"),
-    cubism_axisFormatMinutes = d3.time.format("%Y-%m-%d"),
-    cubism_axisFormatDays = d3.time.format("%Y-%m-%d");
-
+var cubism_axisFormatSeconds = d3.time.format("%I:%M:%S %p"),
+    cubism_axisFormatMinutes = d3.time.format("%I:%M %p"),
+    cubism_axisFormatDays = d3.time.format("%B %d");
 cubism_contextPrototype.rule = function() {
   var context = this,
       metric = cubism_identity;
@@ -1007,7 +1013,7 @@ cubism_contextPrototype.rule = function() {
     context.on("focus.rule-" + id, function(i) {
       line.datum(i)
           .style("display", i == null ? "none" : null)
-          .style("left", cubism_ruleLeft);
+          .style("left", i == null ? null : cubism_ruleLeft);
     });
   }
 
